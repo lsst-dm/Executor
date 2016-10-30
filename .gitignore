@@ -1,0 +1,9 @@
+# IDE
+.idea/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+
+# Sphinx documentation
+docs/_build
