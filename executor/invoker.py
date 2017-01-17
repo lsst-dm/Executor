@@ -2,7 +2,7 @@ import argparse
 import json
 import jsonschema
 from .mapper import TaskMapper
-from .commands import InitRepo, IngestCalibs, IngestKern, IngestData, RunTask
+from .commands import InitRepo, IngestCalibs, IngestData, RunTask
 
 
 def create_parser():

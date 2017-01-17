@@ -96,33 +96,6 @@ class IngestCalibs(Command):
             shutil.copy(rec['pfn'], dest)
 
 
-class IngestKern(Command):
-    """Ingest kernel file to a butler repository.
-
-    .. warning::
-       This is a quick and dirty, temporary solution for HSC data repository!
-       Once butler developers provide a generic interface for ingesting
-       calibration files to a butler repository, it will be deprecated.
-
-    Parameters
-    ----------
-    path : `str`
-        Location of the butler repository.
-    files : `list` of `str`
-        Files to ingest.
-    """
-    def __init__(self, path, files):
-        self.files = [files] if isinstance(files, str) else files
-        self.path = os.path.join(path, 'CALIB')
-
-    def execute(self):
-        dest = os.path.join(self.path, 'BFKERNEL')
-        if not os.path.exists(dest):
-            os.makedirs(dest)
-        for file in self.files:
-            shutil.copy(file, dest)
-
-
 class IngestData(Command):
     """Ingest data files to the data butler repository.
 
