@@ -3,6 +3,7 @@ import json
 import jsonschema
 from .mapper import TaskMapper
 from .commands import InitRepo, IngestCalibs, IngestData, RunTask
+from .schema import default
 
 
 def create_parser():
@@ -37,7 +38,9 @@ def execute(argv):
     if args.schema is not None:
         with open(args.schema, 'r') as s:
             schema = json.load(s)
-        jsonschema.validate(job, schema)
+    else:
+        schema = default
+    jsonschema.validate(job, schema)
 
     root = job['repo']['root']
 
@@ -52,7 +55,11 @@ def execute(argv):
 
     # If the value of the field 'data' contains list of file specifications,
     # build the butler repository from scratch.
-    if job['data'] is not None:
+    data = job.get('data')
+    if data is not None:
+        if not data:
+            raise ValueError('no files to ingest.')
+
         # Add the command that will create an empty butler repository at a
         # given location with a required mapper.
         try:
@@ -64,47 +71,41 @@ def execute(argv):
 
         # Add the command which will ingest raw data.
         name = 'ingestImages'
-        tmpl_reg = '--mode {mod}'.format
+        tmpl = '--mode {mod}'
         task = mapper.get_task(name)
-        files = [rec['pfn'] for rec in job['data']]
-        opts = tmpl_reg(mod='copy').split()
+        files = [rec['pfn'] for rec in data]
+        opts = tmpl.format(mod='copy').split()
         queue.append(IngestData(task, root, files, opts))
 
-        # Add the commands which will ingest required calibration data.
-        name = 'ingestCalibs'
-        tmpl_reg = '--calib {path} --calibType {type} --validity {val}'.format
-        tmpl_alt = '--calib {path} --validity {val}'.format
-        task = mapper.get_task(name)
-        calibs = job['calibs']
-        for rec in calibs:
-            filename, meta = rec['pfn'], rec['meta']
-            try:
-                kind= meta['type']
-            except KeyError:
-                raise ValueError('calibration type not specified, '
-                                 'cannot ingest \'%s\'.' % rec['pfn'])
+        # Add the commands which will ingest calibration data, if any.
+        calibs = job.get('calibs')
+        if calibs is not None:
+            name = 'ingestCalibs'
+            tmpl = '--calib {path} --validity {val}'
+            task = mapper.get_task(name)
+            for rec in calibs:
+                filename, meta = rec['pfn'], rec['meta']
+                kind = meta.get('type')
 
-            # Kernel does not require ingesting.
-            if kind == 'bfKernel':
-                continue
+                # Kernel does not require ingesting to repository's registry.
+                if kind == 'bfKernel':
+                    continue
 
-            try:
-                val = meta['validity']
-            except KeyError:
-                raise ValueError('calibration validity period not specified, '
-                                 'cannot ingest \'%s\'.' % rec['pfn'])
-            if kind in ['bias', 'dark', 'defect', 'flat', 'fringe']:
-                opts = tmpl_reg(path=root, type=kind, val=str(val))
-            else:
-                opts = tmpl_alt(path=root, val=str(val))
-            queue.append(IngestData(task, root, filename, opts.split()))
+                # Update option template if type is specified explicitly.
+                if kind in ['bias', 'dark', 'defect', 'flat', 'fringe']:
+                    tmpl += ' --calibType {type}'
 
-        # And this is the place where things are getting really funny. The LSST
-        # task responsible for ingesting calibration files to a butler
-        # repository does NOT copy/move/link the files it only updates
-        # the repository's registry.  Placing the files in the expected
-        # locations is apparently left as an exercise for a reader.
-        queue.append(IngestCalibs(root, calibs))
+                val = str(meta.get('validity', 999))
+                opts = tmpl.format(path=root, type=kind, val=val).split()
+                queue.append(IngestData(task, root, filename, opts))
+
+            # And this is the place where things are getting really funny.
+            # The LSST task responsible for ingesting calibration files to
+            # a butler repository does NOT copy/move/link the files it only
+            # updates the repository's registry.  Placing the files in
+            # the expected locations is apparently left as an exercise for
+            # a reader.
+            queue.append(IngestCalibs(root, calibs))
 
     # Add the command which will run the LSST task.
     name, args = job['task']['name'], job['task']['args']
