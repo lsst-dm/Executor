@@ -83,7 +83,7 @@ class IngestCalibs(Command):
     """
 
     def __init__(self, path, records):
-        self.files = [records] if isinstance(records, dict) else records
+        self.records = [records] if isinstance(records, dict) else records
         self.path = os.path.abspath(path)
 
     def execute(self):
