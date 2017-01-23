@@ -16,7 +16,7 @@ default = {
                     "description": "List of task arguments"
                 }
             },
-            "required": [ "name", "ids" ]
+            "required": [ "name", "args" ]
         },
         "input": { "$ref": "#/definitions/repository" },
         "output": { "$ref": "#/definitions/repository" },

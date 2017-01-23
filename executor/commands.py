@@ -62,24 +62,23 @@ class IngestCalibs(Command):
         Records describing files to ingest. Each record should contain at
         least two fields:
 
-        * `pfn`: physical file name,
-        * `meta`: a set of key/value pairs defining the metadata associated
-           with a given file
+        * **pfn**: physical file name,
+        * **meta**: a set of key/value pairs defining the metadata associated
+          with a given file
 
-        Additionally, `meta` field should include `template` entry which
+        Additionally, **meta** field should include **template** entry which
         describes how the metadata should be used to place the file in a
-        location recognized by the butler. See below for an example record.
+        location recognized by the butler. See below for an example record. ::
 
-        ```
-        {
-            'pfn': 'BIAS-2013-11-03-004.fits',
-            'meta': {
-                'date': '2013-11-03',
-                'ccd': 4
-                'template': 'BIAS/{date:s}/NONE/BIAS-{date:s}-{ccd:03d}.fits'
+            {
+                'pfn': 'BIAS-2013-11-03-004.fits',
+                'meta': {
+                    'date': '2013-11-03',
+                    'ccd': 4,
+                    'template': 'BIAS/{date:s}/NONE/BIAS-{date:s}-{ccd:03d}.fits'
+                }
             }
-        }
-        ```
+
     """
 
     def __init__(self, path, records):
