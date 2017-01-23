@@ -42,7 +42,7 @@ def execute(argv):
         schema = default
     jsonschema.validate(job, schema)
 
-    root = job['repo']['root']
+    root = job['input']['root']
 
     # Create a map between task names and the code (i.e. modules and classes).
     snowflakes = {
@@ -63,7 +63,7 @@ def execute(argv):
         # Add the command that will create an empty butler repository at a
         # given location with a required mapper.
         try:
-            mapping = job['repo']['mapper']
+            mapping = job['input']['mapper']
         except KeyError:
             raise ValueError('mapper not specified, '
                              'cannot create butler repository.')
@@ -108,7 +108,9 @@ def execute(argv):
             queue.append(IngestCalibs(root, calibs))
 
     # Add the command which will run the LSST task.
-    name, args = job['task']['name'], job['task']['args']
+    name, ids = job['task']['name'], job['task']['ids']
+    tmpl = '--id {ids} --output {out}'
+    args = tmpl.format(ids=','.join(ids), out=job['output']['root']).split()
     task = mapper.get_task(name)
     queue.append(RunTask(task, root, args))
 
