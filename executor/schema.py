@@ -10,7 +10,7 @@ default = {
                     "type": "string",
                     "description": "Task name"
                 },
-                "ids": {
+                "args": {
                     "type": "array",
                     "items": { "type": "string" },
                     "description": "List of task arguments"

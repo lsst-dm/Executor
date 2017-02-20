@@ -108,9 +108,9 @@ def execute(argv):
             queue.append(IngestCalibs(root, calibs))
 
     # Add the command which will run the LSST task.
-    name, ids = job['task']['name'], job['task']['ids']
-    tmpl = '--id {ids} --output {out}'
-    args = tmpl.format(ids=','.join(ids), out=job['output']['root']).split()
+    name, args = job['task']['name'], job['task']['args']
+    tmpl = '--output {out} {args}'
+    args = tmpl.format(out=job['output']['root'], args=' '.join(args)).split()
     task = mapper.get_task(name)
     queue.append(RunTask(task, root, args))
 

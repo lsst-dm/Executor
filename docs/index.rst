@@ -109,7 +109,7 @@ where ``processCcd.json`` is job specification in JSON format:
    {
        "task": {
            "name": "processCcd",
-           "ids": [ "visit=904010", "ccd=4" ]
+           "args": [ "--id", "visit=904010", "ccd=4" ]
        },
        "input": {
            "root": "/tmp/input"
@@ -133,7 +133,7 @@ hints.  For example, if you modify the ``processCcd.json`` as below
    {
        "task": {
            "name": "processCcd",
-           "ids": [ "visit=904010", "ccd=4" ]
+           "args": [ "--id", "visit=904010", "ccd=4" ]
        },
        "input": {
            "root"; "/tmp/input",
@@ -169,7 +169,7 @@ calibration files as well:
    {
        "task": {
            "name": "processCcd",
-           "ids": [ "visit=904010", "ccd=4" ]
+           "args": [ "--id", "visit=904010", "ccd=4" ]
        },
        "input": {
            "root"; "/tmp/input",
