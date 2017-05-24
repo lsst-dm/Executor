@@ -1,0 +1,19 @@
+{
+	"version": 1,
+	"formatters": {
+		"simple": {
+			"format": "%(levelname)s:%(name)s:%(message)s"
+		}
+	},
+	"handlers": {
+		"default": {
+			"class": "logging.FileHandler",
+			"filename": "executor.log",
+			"formatter": "simple"
+		}
+	},
+	"root": {
+		"handlers": ["default"],
+		"level": "INFO"
+	}
+}

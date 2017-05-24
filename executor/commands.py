@@ -1,5 +1,6 @@
 import abc
 import shutil
+import six
 import sys
 import os
 
@@ -34,16 +35,24 @@ class InitRepo(Command):
 
     def __init__(self, path, mapper, mapper_file='_mapper'):
         self.path = path
-        self.mapper = mapper + '\n'
-        self.mapper_file = mapper_file
+        self.mapper_file = os.path.join(self.path, mapper_file)
+        self.mapper_type = mapper
+
+    def __str__(self):
+        tmpl = '{map} in {file}'
+        return tmpl.format(map=self.mapper_type, file=self.mapper_file)
+
+    def __repr__(self):
+        tmpl = '{cmd}({path!r}, {map!r}, mapper_file={file!r})'
+        return tmpl.format(cmd=self.__class__.__name__, path=self.path,
+                           map=self.mapper_type, file=self.mapper_file)
 
     def execute(self):
         if os.path.exists(self.path):
             shutil.rmtree(self.path)
         os.makedirs(self.path)
-        file = os.path.join(self.path, self.mapper_file)
-        with open(file, 'w') as f:
-            f.write(self.mapper)
+        with open(self.mapper_file, 'w') as f:
+            f.write(self.mapper_type + '\n')
 
 
 class IngestCalibs(Command):
@@ -85,6 +94,11 @@ class IngestCalibs(Command):
         self.records = [records] if isinstance(records, dict) else records
         self.path = os.path.abspath(path)
 
+    def __repr__(self):
+        tmpl = '{cmd}({path!r}, records={recs})'
+        return tmpl.format(cmd=self.__class__.__name__, path=self.path,
+                           recs=self.records)
+
     def execute(self):
         for rec in self.records:
             meta = rec['meta']
@@ -104,22 +118,35 @@ class IngestData(Command):
         The LSST task allowing to ingest data to the repository, e.g. `ingest`.
     path : `str`
         Location of data butler repository.
-    files : iterable of `str`
-        Names of the data files which should be ingested to the repository.
     opts : `list` of `str`
         List of task's options.
+    files : iterable of `str`
+        Names of the data files which should be ingested to the repository.
     """
 
-    def __init__(self, task, path, files, opts):
-        self.path = path
-        self.files = [files] if isinstance(files, unicode) else files
-        self.opts = opts
+    def __init__(self, task, path, opts, files):
         self.receiver = task
+        self.name = getattr(self.receiver, '_DefaultName')
+        self.path = path
+        self.opts = opts
+        self.files = [files] if isinstance(files, six.string_types) else files
+
+    def __repr__(self):
+        tmpl = '{cmd}({task}, {path!r}, {opts}, {files})'
+        return tmpl.format(cmd=self.__class__.__name__, task=self.receiver,
+                           path=self.path, opts=self.opts, files=self.files)
+
+    def __str__(self):
+        name = self.name + '.py'
+        args = ' '.join(self.opts + self.files)
+        tmpl = '{task} {root} {argv}'
+        return tmpl.format(task=name, root=self.path, argv=args)
 
     def execute(self):
-        sys.argv = [self.receiver._DefaultName]
+        sys.argv = [self.name]
         sys.argv.append(self.path)
-        [sys.argv.append(arg) for arg in self.opts + self.files]
+        sys.argv.append(self.opts)
+        sys.argv.append(self.files)
         self.receiver.parseAndRun()
 
 
@@ -131,14 +158,29 @@ class RunTask(Command):
     task : CmdLineTask
         An LSST command line task, e.g. `processCcd`.
     path : `str`
-        Location of data butler repository.
+        Location of dataset repository.
     args : `list` of `str`
         Task's optional arguments.
     """
 
     def __init__(self, task, path, args):
         self.receiver = task
-        self.argv = [path] + args
+        self.name = getattr(self.receiver, '_DefaultName')
+        self.path = path
+        self.args = args
+
+    def __repr__(self):
+        args = ' '.join([self.path] + self.args)
+        tmpl = '{cmd}({task}, {path!r}, {argv})'
+        return tmpl.format(cmd=self.__class__.__name__, task=self.receiver,
+                           path=self.path, argv=args)
+
+    def __str__(self):
+        name = self.name + '.py'
+        args = ' '.join(self.args)
+        tmpl = '{task} {root} {argv}'
+        return tmpl.format(task=name, root=self.path, argv=args)
 
     def execute(self):
-        self.receiver.parseAndRun(args=self.argv)
+        argv = [self.path] + self.args
+        self.receiver.parseAndRun(args=argv)
