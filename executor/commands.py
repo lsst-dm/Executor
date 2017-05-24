@@ -58,60 +58,41 @@ class IngestCalibs(Command):
     ----------
     path : `str`
         Location of the butler repository.
-    files : `list` of `str`
-        Files to ingest.
+    records : `list` of `dict`
+        Records describing files to ingest. Each record should contain at
+        least two fields:
+
+        * **pfn**: physical file name,
+        * **meta**: a set of key/value pairs defining the metadata associated
+          with a given file
+
+        Additionally, **meta** field should include **template** entry which
+        describes how the metadata should be used to place the file in a
+        location recognized by the butler. See below for an example record. ::
+
+            {
+                'pfn': 'BIAS-2013-11-03-004.fits',
+                'meta': {
+                    'date': '2013-11-03',
+                    'ccd': 4,
+                    'template': 'BIAS/{date:s}/NONE/BIAS-{date:s}-{ccd:03d}.fits'
+                }
+            }
+
     """
 
-    def __init__(self, path, files):
-        self.files = [files] if isinstance(files, str) else files
-        self.path = os.path.join(path, 'CALIB')
+    def __init__(self, path, records):
+        self.records = [records] if isinstance(records, dict) else records
+        self.path = os.path.abspath(path)
 
     def execute(self):
-        for file in self.files:
-            name = os.path.basename(file)
-            index = name.find('.')
-
-            filter = 'NONE'
-            tokens = name[:index].split('-')
-            if len(tokens) == 5:
-                type, year, month, day, ccd = tokens
-            else:
-                type, year, month, day, cam, band, cdd, = tokens
-                filter = '-'.join([cam, band])
-            date = '-'.join([year, month, day])
-            subpath = '/'.join([type, date, filter])
+        for rec in self.records:
+            meta = rec['meta']
+            subpath = meta['template'].format(**meta)
             dest = os.path.join(self.path, subpath)
-            if not os.path.exists(dest):
-                os.makedirs(dest)
-
-            shutil.copy(file, dest)
-
-
-class IngestKern(Command):
-    """Ingest kernel file to a butler repository.
-
-    .. warning::
-       This is a quick and dirty, temporary solution for HSC data repository!
-       Once butler developers provide a generic interface for ingesting
-       calibration files to a butler repository, it will be deprecated.
-
-    Parameters
-    ----------
-    path : `str`
-        Location of the butler repository.
-    files : `list` of `str`
-        Files to ingest.
-    """
-    def __init__(self, path, files):
-        self.files = [files] if isinstance(files, str) else files
-        self.path = os.path.join(path, 'CALIB')
-
-    def execute(self):
-        dest = os.path.join(self.path, 'BFKERNEL')
-        if not os.path.exists(dest):
-            os.makedirs(dest)
-        for file in self.files:
-            shutil.copy(file, dest)
+            if not os.path.exists(os.path.dirname(dest)):
+                os.makedirs(os.path.dirname(dest))
+            shutil.copy(rec['pfn'], dest)
 
 
 class IngestData(Command):
@@ -122,7 +103,7 @@ class IngestData(Command):
     task : CmdLineTask
         The LSST task allowing to ingest data to the repository, e.g. `ingest`.
     path : `str`
-        Desired location of data butler repository.
+        Location of data butler repository.
     files : iterable of `str`
         Names of the data files which should be ingested to the repository.
     opts : `list` of `str`
@@ -131,14 +112,14 @@ class IngestData(Command):
 
     def __init__(self, task, path, files, opts):
         self.path = path
-        self.files = [files] if isinstance(files, str) else files
+        self.files = [files] if isinstance(files, unicode) else files
         self.opts = opts
         self.receiver = task
 
     def execute(self):
         sys.argv = [self.receiver._DefaultName]
         sys.argv.append(self.path)
-        [sys.argv.append(file) for file in self.opts + self.files]
+        [sys.argv.append(arg) for arg in self.opts + self.files]
         self.receiver.parseAndRun()
 
 

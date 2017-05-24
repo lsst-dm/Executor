@@ -14,16 +14,16 @@ class TaskMapper(object):
     ----------
     pkg_names : `list` of `str`
         List of package names to inspect.
-    specials : `dict`, optional
+    special : `dict`, optional
         Task naming conventions in the LSST code base are incoherent so any
         mapping heuristic will invariably fail. Instead of ad hoc changes
         use this dictionary to add all the special snowflakes as a temporary
         solution and keep bugging developers to fix the exceptions. Its
-        elements should follow the template below
+        elements should follow the template below::
 
-            <task name>: (<package name>, <class name>)
+            <task name>: (<pkg name>, <cls name>)
 
-        e.g.
+        e.g.::
 
            'ingestImages': ('lsst.pipe.tasks.ingest', 'IngestTask')
 

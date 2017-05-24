@@ -13,12 +13,12 @@ Welcome to Executor's documentation!
 Introduction
 ============
 
-With few exceptions, all LSST tasks science pipelines consists of use **data
-butler** [`ref`__] for performing I/O operations.  The data butler stores
-datasets (persisted forms of in-memory objects) and associated metadata in
-**dataset repositories**.  This design implies that both tasks' input and
-output data resides exclusively in dataset repositories.  Thus you can't run a
-task unless you have one.
+With few exceptions, all LSST tasks science pipelines use **data butler**
+[`ref`__] for performing I/O operations.  The data butler stores datasets
+(persisted forms of in-memory objects) and associated metadata in **dataset
+repositories**.  This design implies that both tasks' input and output data
+resides exclusively in dataset repositories.  Thus you can't run a task unless
+you have one.
 
 From an LSST developer's perspective, creating an input dataset repository
 *from scratch* is a rare event and presence of excessive data in it is hardly a
@@ -74,9 +74,9 @@ using it, clone project's repository to a directory of choice:
 
 .. code-block:: bash
 
-   $ git clone git@github.com:mxk62/Executor.git
+    $ git clone git@github.com:lsst-dm/Executor.git
 
-and update your ``PYTHONPATH`` and ``PATH`` variables
+and update your ``PYTHONPATH`` and ``PATH``:
 
 .. code-block:: bash
 
@@ -92,30 +92,143 @@ Normally, to run an LSST task, e.g. ``processCcd``, you would type
 
 .. code-block:: bash
 
-   processCcd $REPO --id visit=904010 ccd=4 --output /tmp/output
+   $ processCcd /tmp/input --id visit=904010 ccd=4 --output /tmp/output
 
-where ``$REPO`` is a location of *a pre-existing* data butler repository.
-However, if all you have is a bunch of files you can use ``Executor`` to make
-it create one for you at the specified location, providing you give it some
-hints about the nature of the files:  
+where ``/tmp/input`` is the location of *a pre-existing* dataset repository.
+
+You can do the same with ``Executor``
 
 .. code-block:: bash
 
-   $ execute processCcd /tmp/repo HSCA90401142.fits \
-   --bias BIAS-2013-11-03-004.fits --dark DARK-2013-11-03-004.fits \
-   --flat FLAT-2013-11-03-HSC-I-004.fits --kernel brighter_fatter_kernel.pkl \
-   --extras --id visit=904010 ccd=4 --output /tmp/output
+   $ execute processCcd.json
 
-The command above will initialize a data butler repository in ``/tmp/repo``,
-ingest the data file ``HSCA90401142.fits``, required calibration files:
-``BIAS-2013-11-03-004.fits``, ``DARK-2013-11-03-004.fits``,
-``FLAT-2013-11-03-HSC-I-004.fits``, ``brighter_fatter_kernel.pkl`` and finally
-run the ``processCcd``.
+where ``processCcd.json`` is job specification in JSON format:
 
-.. note::
+.. code-block:: json
 
-   Note that all task specific options (if any) **must** follow the
-   ``--extras`` option.
+   {
+       "task": {
+           "name": "processCcd",
+           "args": [ "--id", "visit=904010", "ccd=4" ]
+       },
+       "input": {
+           "root": "/tmp/input"
+       },
+       "output": {
+           "root": "/tmp/output"
+       }
+   }
+
+Though it looks like a lot of extra work, the example above only shows that you
+can use ``Executor`` even if your data sit already in a dataset repository.
+
+Keep in mind though that ``Executors``'s primary goal is to launch an LSST task
+when you don't have this luxury and all you have at hand is a bunch of files.
+In such a case, ``Executor`` will make one for you providing you give it some
+hints.  For example, if you modify the ``processCcd.json`` as below
+
+.. code-block:: json
+   :emphasize-lines: 8,13-20
+
+   {
+       "task": {
+           "name": "processCcd",
+           "args": [ "--id", "visit=904010", "ccd=4" ]
+       },
+       "input": {
+           "root"; "/tmp/input",
+           "mapper": "lsst.obs.hsc.HscMapper"
+       },
+       "output": {
+           "root": "/tmp/output"
+       },
+       "data": [
+           {
+               "pfn": "HSCA90401142.fits",
+               "meta": {
+                   "type": "raw"
+               }
+           }
+       ]
+   }
+
+and run ``execute processCcd.json`` again, ``Executor`` will:
+
+1. create the dataset repository root, i.e., ``/tmp/input``,
+2. set the mapper to use (line 8),
+3. ingest file ``HSCA90401142.fits`` to the repository (lines 10-15), and
+   finally,
+4. run ``processCcd`` with specified data ids.
+
+Though don't do it yet! Beside the data files, you will need to ingest a few
+calibration files as well:
+
+.. code-block:: json
+   :emphasize-lines: 21-
+
+   {
+       "task": {
+           "name": "processCcd",
+           "args": [ "--id", "visit=904010", "ccd=4" ]
+       },
+       "input": {
+           "root"; "/tmp/input",
+           "mapper": "lsst.obs.hsc.HscMapper"
+       },
+       "output": {
+           "root": "/tmp/output"
+       },
+       "data": [
+           {
+               "pfn": "HSCA90401142.fits",
+               "meta": {
+                   "type": "raw"
+               }
+           }
+       ],
+       "calibs": [
+           {
+               "pfn": "BIAS-2013-11-03-004.fits",
+               "meta": {
+                   "type": "bias",
+                   "validity": 999,
+                   "calibDate": "2013-11-03",
+                   "ccd": 4,
+                   "template": "CALIB/BIAS/{calibDate:s}/NONE/BIAS-{calibDate:s}-{ccd:03d}.fits"
+               }
+           },
+           {
+               "pfn": "DARK-2013-11-03-004.fits",
+               "meta": {
+                   "type": "dark",
+                   "validity": 999,
+                   "calibDate": "2013-11-03",
+                   "ccd": 4,
+                   "template": "CALIB/DARK/{calibDate:s}/NONE/DARK-{calibDate:s}-{ccd:03d}.fits"
+               }
+           },
+           {
+               "pfn": "FLAT-2013-11-03-004.fits",
+               "meta": {
+                   "type": "flat",
+                   "validity": 999,
+                   "calibDate": "2013-11-03",
+                   "filter": "HSC-I",
+                   "ccd": 4,
+                   "template": "CALIB/FLAT/{calibDate:s}/{filter:s}/FLAT-{calibDate:s}-{ccd:03d}.fits"
+               }
+           },
+           {
+               "pfn": "brighter_fatter_kernel.pkl",
+               "meta": {
+                   "type": "bfKernel",
+                   "template": "CALIB/BFKERNEL/brighter_fatter_kernel.pkl"
+               }
+           }
+       ]
+   }
+
+Now you're ready to run ``processCcd`` without worring about having a dataset repository. Enjoy!
 
 .. warning::
 
