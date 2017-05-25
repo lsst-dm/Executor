@@ -1,0 +1,62 @@
+{
+	"task": {
+		"name": "processCcd",
+		"args": [ "--id", "visit=904010", "ccd=4" ]
+	},
+	"input": {
+		"root": "/tmp/input",
+		"mapper": "lsst.obs.hsc.HscMapper"
+	},
+	"output": {
+		"root": "/tmp/output"
+	},
+	"calibs": [
+		{
+			"pfn": "BIAS-2013-11-03-004.fits",
+			"meta": {
+				"type": "bias",
+				"validity": 999,
+				"calibDate": "2013-11-03",
+				"ccd": 4,
+				"template": "CALIB/BIAS/{calibDate:s}/NONE/BIAS-{calibDate:s}-{ccd:03d}.fits"
+			}
+		},
+		{
+			"pfn": "DARK-2013-11-03-004.fits",
+			"meta": {
+				"type": "dark",
+				"validity": 999,
+				"calibDate": "2013-11-03",
+				"ccd": 4,
+				"template": "CALIB/DARK/{calibDate:s}/NONE/DARK-{calibDate:s}-{ccd:03d}.fits"
+			}
+		},
+		{
+			"pfn": "FLAT-2013-11-03-HSC-I-004.fits",
+			"meta": {
+				"type": "flat",
+				"validity": 999,
+				"calibDate": "2013-11-03",
+				"filter": "HSC-I",
+				"ccd": 4,
+				"template": "CALIB/FLAT/{calibDate:s}/{filter:s}/FLAT-{calibDate:s}-{filter:s}-{ccd:03d}.fits"
+			}
+		},
+		{
+			"pfn": "brighter_fatter_kernel.pkl",
+			"meta": {
+				"type": "bfKernel",
+				"validity": null,
+				"template": "CALIB/BFKERNEL/brighter_fatter_kernel.pkl"
+			}
+		}
+	],
+	"data": [
+		{
+			"pfn": "HSCA90401142.fits",
+			"meta": {
+				"type": "raw"
+			}
+		}
+	]
+}
