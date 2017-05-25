@@ -26,9 +26,9 @@ matter of concern.  In contrast, due to its distributed architecture, in the
 LSST production environment dataset repositories are created frequently with
 very specific data. 
 
-The primary goal of ``Executor`` is to create locally a minimal dataset
+The primary goal of **Executor** is to create locally a minimal dataset
 repository allowing a given LSST task to run and collects data of interest
-after the it is finished.  Specifically, ``Executor`` will:
+after the it is finished.  Specifically, **Executor** will:
 
 1. create a butler repository initializing an appropriate mapper;
 
@@ -45,13 +45,13 @@ after the it is finished.  Specifically, ``Executor`` will:
 Prerequisites
 =============
 
-``Executor`` is merely a wrapper. To run tasks with its help you have to
+**Executor** is merely a wrapper. To run tasks with its help you have to
 have the LSST Stack installed and properly configured on your computer.
 Installation of the LSST Stack is beyond the scope of this document, but fairly
 complete instructions can be found `here`__.
 
 .. note::
-   At the moment, ``Executor`` works only with HSC mapper so you need to
+   At the moment, **Executor** works only with HSC mapper so you need to
    install ``obs_subaru`` package and its dependencies as well.
 
    
@@ -69,7 +69,7 @@ and you're good to go.
 Installation
 ============
 
-Currently ``Executor`` has no no automated installation procedure. To begin
+Currently **Executor** has no no automated installation procedure. To begin
 using it, clone project's repository to a directory of choice:
 
 .. code-block:: bash
@@ -96,7 +96,7 @@ Normally, to run an LSST task, e.g. ``processCcd``, you would type
 
 where ``/tmp/input`` is the location of *a pre-existing* dataset repository.
 
-You can do the same with ``Executor``
+You can do the same with **Executor**
 
 .. code-block:: bash
 
@@ -120,11 +120,11 @@ where ``processCcd.json`` is job specification in JSON format:
    }
 
 Though it looks like a lot of extra work, the example above only shows that you
-can use ``Executor`` even if your data sit already in a dataset repository.
+can use **Executor** even if your data sit already in a dataset repository.
 
 Keep in mind though that ``Executors``'s primary goal is to launch an LSST task
 when you don't have this luxury and all you have at hand is a bunch of files.
-In such a case, ``Executor`` will make one for you providing you give it some
+In such a case, **Executor** will make one for you providing you give it some
 hints.  For example, if you modify the ``processCcd.json`` as below
 
 .. code-block:: json
@@ -152,7 +152,7 @@ hints.  For example, if you modify the ``processCcd.json`` as below
        ]
    }
 
-and run ``execute processCcd.json`` again, ``Executor`` will:
+and run ``execute processCcd.json`` again, **Executor** will:
 
 1. create the dataset repository root, i.e., ``/tmp/input``,
 2. set the mapper to use (line 8),
@@ -235,7 +235,7 @@ Now you're ready to run ``processCcd`` without worring about having a dataset re
    By default, ``processCcd`` when run against HSC data repository will try to
    use atronometry reference catalog.  However, getting it work wih HSC data
    repositories seems to be a bit `tricky`__ and is not supported by
-   ``Executor`` at the moment. To disable this feature, override default
+   **Executor** at the moment. To disable this feature, override default
    configuration by using following configuration overrides in
    ``$LSSTSW/build/obs_subaru/config/processCcd.py``
 
@@ -260,6 +260,61 @@ Using Executor
 ==============
 
 Under construction.
+
+Logging
+-------
+
+To track events when it is running, **Executor** uses **logging** module
+from standard Python library.
+
+By default, only events with severity set to ``WARNING`` and higher are printed
+out on the console.
+
+You can customized what is being logged, where, and how with a logging
+configuration file in JSON format, e.g.:
+
+.. code-block:: text
+
+   { 
+       "version": 1,
+       "formatters": {
+           "simple": {
+               "format": "%(levelname)s:%(name)s:%(message)s"
+           }
+       },
+       "handlers": {
+           "default": {
+               "class": "logging.FileHandler",
+               "filename": "executor.log",
+               "formatter": "simple"
+           }
+       },
+       "root": {
+           "handlers": ["default"],
+           "level": "INFO"
+       }
+   }
+
+The file above will make **Executor** to record events with severity ``INFO``
+and higher to a file ``executor.log``.
+
+.. note::
+
+   `PEP-391`__ is the authoritative source describing the logging configuration
+   specification in detail but `Advanced Logging Tutorial`__ together with
+   `Logging Cookbook`__ might be a better choice for the first reading.
+
+.. __: https://www.python.org/dev/peps/pep-0391/
+.. __: https://docs.python.org/3.6/howto/logging.html#advanced-logging-tutorial
+.. __: https://docs.python.org/3.6/howto/logging-cookbook.html
+
+**Executor** will look for logging configuration file called ``logging.json``
+in the working directory.  Alternatively you can point it to other file with
+logging configuration using ``--logging`` (or ``-l`` for short) option:
+
+.. code-block:: shell
+
+   $ execute -l logging.json job.json
 
 Developer's corner
 ==================
