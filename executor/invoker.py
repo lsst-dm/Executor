@@ -59,7 +59,7 @@ def execute(argv):
     parser = create_parser()
     args = parser.parse_args(argv[1:])
 
-    logger = setup_logging(level=logging.INFO)
+    logger = setup_logging(level=logging.WARNING)
     if args.logging is not None:
         logger = setup_logging(path=args.logging)
     logger.info('Logger configured, starting logging events.')
