@@ -1,8 +1,12 @@
 import abc
+import logging
 import shutil
 import six
 import sys
 import os
+
+
+logger = logging.getLogger(__name__)
 
 
 class Command(object):
@@ -28,9 +32,10 @@ class InitRepo(Command):
     mapper_file : `str`, optional
         Name of the mapper file, defaults to `_mapper`.
 
-    Notes
-    -----
-    For now, any pre-existing butler repo at the given location is obliterated.
+    Raises
+    ------
+    ValueError
+        If a dataset repository already exists at specified location.
     """
 
     def __init__(self, path, mapper, mapper_file='_mapper'):
@@ -49,7 +54,9 @@ class InitRepo(Command):
 
     def execute(self):
         if os.path.exists(self.path):
-            shutil.rmtree(self.path)
+            msg = 'Dataset repository exists at \'{}\''.format(self.path)
+            logger.error(msg)
+            raise ValueError(msg)
         os.makedirs(self.path)
         with open(self.mapper_file, 'w') as f:
             f.write(self.mapper_type + '\n')
