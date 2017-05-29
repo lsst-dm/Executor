@@ -41,8 +41,8 @@ def create_parser():
                         help='job specification')
     parser.add_argument('-d', '--dry-run', dest='dryrun', action='store_false',
                         help='print commands instead execute')
-    parser.add_argument('-l', '--logging',
-                        help='logging configuration')
+    parser.add_argument('-l', '--logging', type=str,
+                        help='logging configuration', default=None)
     parser.add_argument('-s', '--schema', type=str,
                         help='JSON schema', default=None)
     return parser
@@ -147,9 +147,10 @@ def execute(argv):
     parser = create_parser()
     args = parser.parse_args(argv[1:])
 
-    logger = setup_logging(level=logging.WARNING)
     if args.logging is not None:
         logger = setup_logging(path=args.logging)
+    else:
+        logger = setup_logging(level=logging.WARNING)
     logger.info('Logger configured, starting logging events.')
 
     logger.info('Reading job description from \'{}\'.'.format(args.file))
@@ -192,7 +193,7 @@ def execute(argv):
                         'enqueuing instructions for validation.')
             cmds = validate_repo(job)
         else:
-            logger.info('Creating input dataset repository from scratch;'
+            logger.info('Creating input dataset repository from scratch; '
                         'enqueuing instructions for building.')
             cmds = create_repo(job, mapper)
         queue.extend(cmds)

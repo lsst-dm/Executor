@@ -150,10 +150,10 @@ class IngestData(Command):
         return tmpl.format(task=name, root=self.path, argv=args)
 
     def execute(self):
-        sys.argv = [self.name]
-        sys.argv.append(self.path)
-        sys.argv.append(self.opts)
-        sys.argv.append(self.files)
+        sys.argv = [self.name, self.path]
+        sys.argv.extend(self.opts)
+        sys.argv.extend(self.files)
+        print sys.argv
         self.receiver.parseAndRun()
 
 
