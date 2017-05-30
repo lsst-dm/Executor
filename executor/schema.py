@@ -3,23 +3,9 @@ default = {
     "description": "schema for Executor's job specification",
     "type": "object",
     "properties": {
-        "task": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string",
-                    "description": "Task name"
-                },
-                "args": {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "List of task arguments"
-                }
-            },
-            "required": [ "name", "args" ]
-        },
-        "input": { "$ref": "#/definitions/repository" },
-        "output": { "$ref": "#/definitions/repository" },
+        "task": { "$ref": "#/definitions/task" },
+        "input": { "$ref": "#/definitions/input" },
+        "output": { "$ref": "#/definitions/output" },
         "calibs": {
             "type": "array",
             "items": { "$ref": "#/definitions/file" },
@@ -32,6 +18,23 @@ default = {
         }
     },
     "definitions": {
+        "task": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Task name"
+                },
+                "args": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "List of task arguments"
+                }
+            },
+            "required": [ "name", "args" ]
+        },
         "file": {
             "type": "object",
             "properties": {
@@ -46,16 +49,34 @@ default = {
             },
             "required": [ "pfn", "meta" ]
         },
-        "repository": {
+        "input": {
             "type": "object",
             "properties": {
                 "root": {
                     "type": "string",
-                    "description": "Location of the butler repository"
+                    "description": "Location of the dataset repository"
                 },
                 "mapper": {
                     "type": "string",
-                    "description": "Butler repository mapper"
+                    "description": "Dataset repository mapper"
+                },
+                "readonly": {
+                    "type": "boolean",
+                    "default": True,
+                }
+            },
+            "required": [ "root", "mapper" ]
+        },
+        "output": {
+            "type": "object",
+            "properties": {
+                "root": {
+                    "type": "string",
+                    "description": "Location of the dataset repository"
+                },
+                "mapper": {
+                    "type": "string",
+                    "description": "Dataset repository mapper"
                 }
             },
             "required": [ "root" ]
